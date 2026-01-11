@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="fragments/_head :: head('CommonBrew · Inventory')"></head>
+
+<body>
+  <div th:replace="fragments/_header :: siteHeader('CommonBrew', 'Inventory Management', 'Online')"></div>
+
+  <div class="main-container" style="display:flex; min-height: calc(100vh - 96px);">
+    <nav class="sidebar">
+      <ul class="nav">
+        <li><a href="#" class="active"><i class="fas fa-boxes"></i> All Inventory</a></li>
+      </ul>
+      <div class="inventory-summary">
+        <h3 style="color:var(--primary-color);">Inventory Summary</h3>
+        <div class="row"><span>Total Items:</span><span id="total-items" class="value">0</span></div>
+        <div class="row"><span>Low Stock:</span><span id="low-stock" class="value">0</span></div>
+        <div class="row"><span>Out of Stock:</span><span id="out-stock" class="value">0</span></div>
+      </div>
+    </nav>
+
+    <main class="content" style="flex:1; padding: 2rem;">
+      <div class="page-header"
+        style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+        <h2 style="color:var(--primary-color);">Inventory</h2>
+        <div class="page-actions" style="display:flex; gap:1rem;">
+          <button class="btn" onclick="window.location.href='/'"><i class="fas fa-home"></i> Dashboard</button>
+          <button class="btn btn-primary" onclick="openAddItemModal()"><i class="fas fa-plus"></i> Add Item</button>
+        </div>
+      </div>
+
+      <div class="category-tabs">
+        <div class="category-tab active" onclick="filterCategory('all')">All Items</div>
+        <div class="category-tab" onclick="filterCategory('dairy')">Dairy</div>
+        <div class="category-tab" onclick="filterCategory('base')">Base Ingredients</div>
+        <div class="category-tab" onclick="filterCategory('powder')">Powders</div>
+        <div class="category-tab" onclick="filterCategory('syrup')">Syrups</div>
+        <div class="category-tab" onclick="filterCategory('other')">Others</div>
+      </div>
+
+      <!-- Table -->
+
+      <div class="inventory-table">
+        <div class="table-header">
+          <div>Item Name</div>
+          <div>Category</div>
+          <div id="th-current">Current Stock <span id="sort-current"></span></div>
+          <div>Unit</div>
+          <div id="th-level">Stock Level <span id="sort-level"></span></div>
+          <div>Actions</div>
+        </div>
+        <div id="inventory-items-container">
+          <!-- Items will be dynamically populated here -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div th:replace="fragments/_footer :: siteFooter()"></div>
+
+  <!-- Add Item Modal -->
+  <div id="add-item-modal" class="modal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal-content"
+      style="background:white; padding:2rem; border-radius:var(--radius); max-width:500px; width:90%; max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <h3 style="color:var(--primary-color);">Add New Item</h3>
+        <button onclick="closeAddItemModal()"
+          style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+      </div>
+      <form id="add-item-form">
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Item Name</label>
+          <input type="text" required
+            style="width:100%; padding:0.75rem; border:1px solid var(--border-color); border-radius:8px;">
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Category</label>
+          <select required
+            style="width:100%; padding:0.75rem; border:1px solid var(--border-color); border-radius:8px;">
+            <option value="">Select Category</option>
+            <option value="dairy">Dairy</option>
+            <option value="base">Base Ingredients</option>
+            <option value="powder">Powders</option>
+            <option value="syrup">Syrups</option>
+            <option value="packaging">Packaging</option>
+          </select>
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Current Stock</label>
+          <input type="number" step="0.001" required
+            style="width:100%; padding:0.75rem; border:1px solid var(--border-color); border-radius:8px;">
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Unit</label>
+          <select required
+            style="width:100%; padding:0.75rem; border:1px solid var(--border-color); border-radius:8px;">
+            <option value="">Select Unit</option>
+            <option value="g">Grams (g)</option>
+            <option value="ml">Milliliters (ml)</option>
+            <option value="pcs">Pieces (pcs)</option>
+            <option value="kg">Kilograms (kg)</option>
+            <option value="L">Liters (L)</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:1rem; margin-top:2rem;">
+          <button type="button" onclick="closeAddItemModal()"
+            style="flex:1; padding:0.75rem; border:1px solid var(--border-color); border-radius:8px; background:white; cursor:pointer;">Cancel</button>
+          <button type="submit"
+            style="flex:1; padding:0.75rem; border:none; border-radius:8px; background:var(--primary-color); color:white; cursor:pointer;">Add
+            Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script th:src="@{/js/common.js}"></script>
+  <script th:src="@{/js/inventory.js}"></script>
+</body>
+
+</html>

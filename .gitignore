@@ -1,0 +1,13 @@
+# Maven
+/target/
+
+# IDE
+/.idea/
+/.vscode/
+/*.iml
+
+# Logs
+*.log
+
+commonbrew-pos/target/classes/com/commonbrew/pos/controller/InventoryController.class
+commonbrew-pos/target/classes/com/commonbrew/pos/repository/InventoryStockRepo.class

@@ -1,6 +1,18 @@
 // TODO: replace with backend data; for now we’ll bootstrap from server/DB soon.
 let currentFilter = 'all';
 let inventoryData = [];
+let db;
+
+// Open IndexedDB for Inventory page
+async function initInventoryDB() {
+  db = await IDB.open('pos-db', 1, (db) => {
+    // Create stores if they don't exist yet
+    const names = db.objectStoreNames;
+    if (!names.contains('sync_events')) db.createObjectStore('sync_events', { keyPath: 'eventId' });
+    if (!names.contains('ingredients')) db.createObjectStore('ingredients', { keyPath: 'id' });
+    if (!names.contains('stocks')) db.createObjectStore('stocks', { keyPath: 'id' });
+  });
+}
 
 async function loadInventoryData() {
   try {
@@ -94,20 +106,47 @@ function renderInventory() {
   document.getElementById('out-stock').textContent = String(out);
 }
 
-function adjustStock(id) {
+
+async function adjustStock(id) {
   const item = inventoryData.find(i => i.id === id);
   if (!item) return;
+
   const adj = prompt(`Adjust stock for ${item.name}\nCurrent: ${item.currentStock} ${item.unit}\nEnter + to add, - to subtract:`, '0');
   if (adj == null) return;
-  const val = parseFloat(adj);
-  if (Number.isFinite(val)) {
-    item.currentStock = Math.max(0, item.currentStock + val);
-    renderInventory();
-    // Later: POST /api/inventory/adjust
-  } else {
-    alert('Please enter a valid number');
-  }
+  const delta = parseFloat(adj);
+  if (!Number.isFinite(delta) || delta === 0) return;
+
+  const event = {
+    eventId: crypto.randomUUID(),
+    type: 'ADJUSTMENT',
+    ingredientId: id,
+    delta,
+    unit: item.unit,
+    reason: delta > 0 ? 'manual add' : 'manual subtract',
+    occurredAt: new Date().toISOString(),
+    actor: 'Nigel',
+    source: 'UI',
+  };
+
+  // 1) Queue locally (requires db to be ready)
+  if (!db) await initInventoryDB();
+  await IDB.put(db, 'sync_events', event);        // <-- safe now
+
+  // 2) Optimistic UI
+  item.currentStock = Math.max(0, (+item.currentStock || 0) + delta);
+  renderInventory();
+
+  // 3) Attempt background sync (ignore errors; keep queued)
+  try {
+    const pending = await IDB.getAll(db, 'sync_events');
+    await fetch('/api/inventory/events', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pending),
+    });
+    for (const e of pending) await IDB.deleteKey(db, 'sync_events', e.eventId);
+  } catch (e) { /* offline; will retry later */ }
 }
+
 
 function bindSidebarFilters() {
   document.querySelectorAll('.sidebar .nav a').forEach(a => {
@@ -122,14 +161,6 @@ function bindSidebarFilters() {
     });
   });
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  bindSidebarFilters();
-});
-
-
-document.addEventListener('DOMContentLoaded', loadInventoryData);
-
 
 // ---- Sorting state ----
 let sortKey = 'name';          // 'name' | 'current' | 'level'
@@ -223,7 +254,10 @@ function renderInventory() {
   document.getElementById('out-stock').textContent   = String(out);
 }
 
-// after DOM load, bind headers (in addition to your existing bindings)
-document.addEventListener('DOMContentLoaded', () => {
-  bindSortHeaders();
+// Boot Inventory page
+document.addEventListener('DOMContentLoaded', async () => {
+  await initInventoryDB();                  // <-- ensure db is ready
+  bindSidebarFilters();                     // existing function
+  bindSortHeaders();                        // existing function
+  await loadInventoryData();                // your function calling /api/bootstrap
 });

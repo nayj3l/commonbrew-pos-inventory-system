@@ -17,7 +17,6 @@ public class InventoryController {
 
     private final InventoryStockRepo stockRepo;
 
-    // PUT /api/inventory/{ingredientId}/threshold body: { "minThreshold": 250.0 }
     @PutMapping("/{ingredientId}/threshold")
     public ResponseEntity<?> setThreshold(@PathVariable Long ingredientId, @RequestBody ThresholdDto body) {
         InventoryStock stock = stockRepo.findByIngredient_Id(ingredientId)
